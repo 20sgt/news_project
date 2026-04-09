@@ -1,0 +1,7 @@
+streamlit
+google-cloud-storage
+python-dotenv
+pandas
+gcsfs
+plotly
+matplotlib

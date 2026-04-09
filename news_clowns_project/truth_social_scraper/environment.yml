@@ -1,0 +1,12 @@
+name: msds692_truthsocial
+channels:
+  - defaults
+dependencies:
+  - python=3.13.5
+  - python_abi=3.13
+  - pip:
+      - dotenv==0.9.9
+      - google-auth==2.40.3
+      - google-cloud-core==2.4.3
+      - google-cloud-storage==3.3.1
+      - requests==2.32.5

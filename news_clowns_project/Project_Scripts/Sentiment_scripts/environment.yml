@@ -1,0 +1,13 @@
+name: sentiment_env
+channels:
+  - defaults
+  - conda-forge
+dependencies:
+  - python=3.11
+  - pandas
+  - nltk
+  - requests
+  - python-dotenv
+  - pip
+  - pip:
+      - google-cloud-storage

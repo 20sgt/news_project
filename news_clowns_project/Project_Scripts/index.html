@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Time Series Regression</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <section id="introduction">
+  <h2>Introduction and Motivation</h2>
+  <p>Time series regression is a method for modeling how a variable changes over regular intervals of time. In simple terms, it uses past values and trends to predict future values. You build a model where time plays a key role as one of the predictors.</p>
+  <p>Standard regression assumes data points are independent. It ignores the order in which they occur. When data is collected in time order, earlier values often influence later ones. Ignoring that order leads to misleading results. Residuals may be correlated across time. Confidence intervals, hypothesis tests become invalid.</p>
+  <p>Real-world use cases include forecasting daily energy usage. Utilities want to know how much electricity people will need tomorrow to optimize supply. Stock price predictions rely on past price movements. Retailers use time series regression to model seasonal product sales—for example, higher demand during holidays. These examples show why you need methods that respect time structure.</p>
+  <p>In this post you will see:</p>
+  <ul>
+    <li>The basic ideas and assumptions behind time series regression</li>
+    <li>How to handle trend, seasonality, lag effects</li>
+    <li>How the model performs compared to standard regression</li>
+    <li>You will later try out interactive tools to experiment with noise, datasets, seasonal patterns</li>
+  </ul>
+  <p>Moreover, understanding time series regression is crucial for many fields such as economics, environmental science, and engineering, where data is naturally ordered in time. It allows analysts to uncover underlying patterns and make informed decisions based on temporal dynamics.</p>
+  <p>Finally, this approach forms the foundation for more advanced forecasting techniques, bridging classical statistics and modern machine learning methods tailored to sequential data.</p>
+</section>
+
+<section id="stationarity-and-transformations">
+  <h2>Stationarity and Transformations</h2>
+  <p>Stationarity is a fundamental concept in time series analysis. A stationary time series has statistical properties—such as mean, variance, and autocorrelation—that do not change over time. Many modeling techniques, including time series regression, assume or require stationarity for valid inference and forecasting.</p>
+  <p>There are two main types of stationarity:</p>
+  <ul>
+    <li><strong>Strict stationarity</strong>: The entire distribution of the series is invariant to time shifts.</li>
+    <li><strong>Weak (or second-order) stationarity</strong>: Only the mean, variance, and autocovariance are constant over time and depend only on the lag between observations, not the specific time.</li>
+  </ul>
+  <p>Most practical time series are not stationary in their raw form. Trends, seasonality, and structural breaks are common sources of non-stationarity. To address this, several transformations can be applied:</p>
+  <ul>
+    <li><strong>Differencing</strong>: Subtracting the previous value from the current value (<em>Y<sub>t</sub> - Y<sub>t-1</sub></em>) removes trend and stabilizes the mean.</li>
+    <li><strong>Detrending</strong>: Fitting and removing a trend component, often using regression or moving averages.</li>
+    <li><strong>Deseasonalizing</strong>: Removing recurring seasonal effects by subtracting average seasonal patterns.</li>
+    <li><strong>Log or power transformations</strong>: Stabilizing the variance, especially when variability increases with the level of the series.</li>
+  </ul>
+  <p>To check for stationarity, visual inspection (time plots), the autocorrelation function (ACF), and statistical tests like the Augmented Dickey-Fuller (ADF) test or KPSS test are commonly used. If a series is found to be non-stationary, applying appropriate transformations before modeling is critical for reliable results.</p>
+</section>
+
+<section id="foundations">
+  <h2>Foundations of Time Series Data</h2>
+  <p>A time series is a sequence of data points indexed in time order. The data are collected at equally spaced intervals such as hourly, daily, monthly, or yearly. Time series data differ from cross-sectional data, where each data point is a separate entity (e.g. people, firms) and the order among points does not matter. With time series, order matters.</p>
+  <p>Three core components usually appear in time series:</p>
+  <ul>
+    <li><strong>Trend</strong>: a long-term increase or decrease. The variable may be steadily rising (e.g. population, price inflation) or falling.</li>
+    <li><strong>Seasonality</strong>: recurring patterns at fixed intervals. For example, sales rise every December, electricity usage peaks each summer, website traffic changes by day of week. The cycle has known period.</li>
+    <li><strong>Noise</strong>: random variation or irregular fluctuations. Things that cannot be explained by trend or seasonality, such as unexpected events or measurement error.</li>
+  </ul>
+  <p>If you ignore autocorrelation — the dependency of observations over time — you may draw wrong conclusions. Autocorrelation means that a value at time <em>t</em> is related to its past values at times <em>t−1, t−2, …</em> This violates standard regression’s assumption that residuals are independent. Tests like Durbin-Watson, plotting autocorrelation function (ACF) help detect this. When residuals are not independent, model standard errors are wrong; inference (confidence intervals, p-values) gets messed up.</p>
+  <p>Additionally, understanding the stationarity of a time series is important. Stationary series have constant mean and variance over time, which simplifies modeling and forecasting. Non-stationary data often require transformations like differencing or detrending to achieve stationarity before applying regression techniques.</p>
+  <p>Time series data can also exhibit structural breaks or abrupt changes due to external factors such as policy changes or economic shocks. Detecting and accounting for these is critical for building robust models that perform well over time.</p>
+</section>
+
+<section id="feature-engineering-for-time-series">
+  <h2>Feature Engineering for Time Series</h2>
+  <p>Feature engineering is the process of creating informative input variables (features) that help models capture the underlying structure of the data. In time series regression, thoughtful feature engineering can significantly improve model performance and interpretability.</p>
+  <p>Common feature engineering techniques for time series include:</p>
+  <ul>
+    <li><strong>Lag features</strong>: Including past values of the target variable (e.g., <em>Y<sub>t-1</sub></em>, <em>Y<sub>t-2</sub></em>) as predictors to capture temporal dependencies.</li>
+    <li><strong>Rolling statistics</strong>: Calculating rolling means, medians, or standard deviations over fixed windows to summarize recent trends or volatility.</li>
+    <li><strong>Seasonal indicators</strong>: Creating dummy variables for seasons, months, days of the week, or holidays to model periodic effects.</li>
+    <li><strong>Fourier terms</strong>: Using sine and cosine functions to model complex or non-integer seasonality.</li>
+    <li><strong>External regressors</strong>: Incorporating exogenous variables such as weather, economic indicators, or promotional events that influence the target variable.</li>
+    <li><strong>Trend terms</strong>: Including polynomial or nonlinear functions of time to capture non-linear trends.</li>
+  </ul>
+  <p>Careful selection and construction of features help the model account for domain-specific patterns, reduce omitted variable bias, and improve predictive accuracy. However, adding too many features can lead to overfitting, so feature selection and regularization techniques may be needed.</p>
+  <p>Feature engineering is often an iterative process, guided by exploratory data analysis, domain knowledge, and diagnostic checks.</p>
+</section>
+
+<section id="basics">
+  <h2>Basics of Time Series Regression</h2>
+  <p>The simplest form of time series regression uses time as the only predictor. Let <em>Y<sub>t</sub></em> be the outcome at time <em>t</em>, then:</p>
+  <p><code>Y<sub>t</sub> = β<sub>0</sub> + β<sub>1</sub>·t + ε<sub>t</sub></code></p>
+  <p>Here β<sub>0</sub> is the intercept, β<sub>1</sub> is the slope (trend), ε<sub>t</sub> is the error term. This captures a linear trend. If β<sub>1</sub> is positive, the data tends to rise over time.</p>
+  <p>Strengths: this model is easy to fit, interpret. It catches long-term trend. Weakness: it fails when seasonality or lag effects matter. For example, daily temperature has seasonal cycles. Stock returns may depend on values from previous days. This basic model treats all error as random noise.</p>
+  <p>Autocorrelation enters when error terms are correlated across time. For example, if ε<sub>t</sub> depends on ε<sub>t−1</sub>, then errors are not independent. When that happens ordinary least squares (OLS) estimates remain unbiased but standard errors and test statistics become unreliable. You may commit type I or II errors more often than expected.</p>
+  <p>It is also important to recognize that the choice of functional form (linear, quadratic, etc.) for the trend component can significantly impact model fit. Nonlinear trends may require polynomial terms or transformations.</p>
+  <p>In practice, residual diagnostics such as plotting residuals over time or examining their autocorrelation function (ACF) are essential to assess model adequacy and identify violations of assumptions.</p>
+</section>
+
+<section id="evaluation-metrics-and-validation">
+  <h2>Evaluation Metrics and Validation</h2>
+  <p>Evaluating the performance of time series regression models requires specialized metrics and validation strategies that account for the temporal nature of the data.</p>
+  <h3>Common Evaluation Metrics</h3>
+  <ul>
+    <li><strong>Mean Absolute Error (MAE)</strong>: The average of absolute differences between predicted and actual values. MAE is easy to interpret and less sensitive to outliers.</li>
+    <li><strong>Root Mean Squared Error (RMSE)</strong>: The square root of the average squared differences between predictions and actuals. RMSE penalizes larger errors more heavily.</li>
+    <li><strong>Mean Absolute Percentage Error (MAPE)</strong>: The average absolute percentage difference between predictions and actuals, useful for comparing errors across different scales.</li>
+    <li><strong>R-squared (Coefficient of Determination)</strong>: Measures the proportion of variance in the dependent variable explained by the model. Note that R-squared can be misleading in time series with strong autocorrelation.</li>
+  </ul>
+  <h3>Validation Strategies</h3>
+  <ul>
+    <li><strong>Train-test split</strong>: Dividing the data chronologically, training on earlier observations and testing on later ones. Never shuffle time series data, as this breaks temporal dependencies.</li>
+    <li><strong>Rolling (or walk-forward) validation</strong>: Repeatedly training the model on expanding windows of data and testing on the next time step, mimicking real-world forecasting scenarios.</li>
+    <li><strong>Cross-validation for time series</strong>: Techniques like time series split or blocked cross-validation that preserve temporal order while assessing model generalizability.</li>
+  </ul>
+  <p>Proper validation guards against overfitting and ensures that models generalize to unseen future data. Always use metrics and validation procedures that reflect the intended use case and the structure of your time series.</p>
+</section>
+
+<section id="illustrative-example">
+  <h2>Illustrative Example (Synthetic Demo)</h2>
+  <p>
+    This is a "perfect world" <strong>time series regression</strong> example using entirely fictitious/generated data. Here, the data points are created to lie almost exactly on the regression line or surface, with no outliers and minimal or no residuals. The relationship between variables is clear and predictable, making it easy to visualize and interpret how a time series regression model fits the data. Such synthetic demos are useful for illustrating the underlying mechanics of time series regression without the complications introduced by real-world noise.
+  </p>
+  <div style="display: inline-flex; align-items: center; gap: 18px; margin-bottom: 10px;">
+    <span>
+      <label for="example-slider">Trend slope (β₁): </label>
+      <input type="range" id="example-slider" min="0" max="3" value="1" step="0.01">
+      <span id="slider-value">1.00</span>
+    </span>
+    <button id="toggle-surface" style="margin-left: 10px;">Toggle Surface</button>
+  </div>
+  <div id="scene-demo" style="width:100%; max-width:900px; height:500px; border:1px solid #ddd;"></div>
+</section>
+
+<section id="csv-example">
+  <h2>Illustrative Example (Real Taxi Data)</h2>
+  <p>
+    This example is interpreted as a <strong>time series regression</strong> on real-world data from the NYC Yellow Taxi 2024 dataset. In this case, the data exhibits much more variability, reflecting the complexity and unpredictability of real-world phenomena. The relationship between predictors and response is affected by genuine noise, outliers, and residuals that do not vanish. This highlights the time series regression context, where patterns over time, temporal dependencies, and variability must be accounted for. Residuals and patterns in the data give insight into the model’s limitations and the importance of accounting for unexplained variability.
+  </p>
+  <div id="scene-csv" style="width:100%; max-width:900px; height:500px; border:1px solid #ddd;"></div>
+</section>
+
+<section id="real-data-application">
+  <h2>Application to Real Data</h2>
+  <p>In real datasets, you often see trend, seasonality, and lagged effects together. For example, monthly retail sales might grow over years (trend), have peaks in holiday months (seasonality), and sales in one month may depend on previous months (lag).</p>
+  <p>In a full regression model you might specify something like:</p>
+  <pre><code>
+Y<sub>t</sub> = β<sub>0</sub> + β<sub>1</sub>·t + β<sub>2</sub>·Season_Month2 + β<sub>3</sub>·Season_Month3 + … + β<sub>12</sub>·Season_Month12
+           + γ<sub>1</sub>·Y<sub>t−1</sub> + γ<sub>2</sub>·Y<sub>t−2</sub> + ε<sub>t</sub>
+  </code></pre>
+  <p>Here the season dummies (Season_Month2 etc) capture monthly effects, lag terms (Y<sub>t−1</sub>, Y<sub>t−2</sub>) capture past dependence. Once fitted, you interpret β<sub>1</sub> as the long-term growth (or decay) per time unit, seasonal β’s as how much each month differs from baseline, lag coefficients γ’s show how much past values predict current.</p>
+  <p>You compare model fit (e.g. R-squared, root mean squared error) between simple model (trend only) vs extended model. Often extended model has better fit, but you check diagnostics: residuals should show no patterns, no strong autocorrelation left.</p>
+  <p>Applying these models to real data requires careful preprocessing, such as handling missing values and outliers, which can distort results if ignored.</p>
+  <p>Moreover, validation using out-of-sample testing or rolling forecasts is critical to assess the model's predictive performance and guard against overfitting.</p>
+</section>
+
+<section id="extensions">
+  <h2>Extensions Beyond the Basics</h2>
+  <p>You often need more than trend. Below are common extensions:</p>
+  <ul>
+    <li><strong>Lagged predictors</strong>: include past values of the dependent variable as explanatory variables. Example: Y<sub>t</sub> regressed on Y<sub>t−1</sub> and Y<sub>t−2</sub>. Captures inertia or memory in the process.</li>
+    <li><strong>Seasonal dummy variables</strong>: create indicators for seasons. If monthly data, dummy for each month (except one to avoid multicollinearity). These capture fixed seasonal shifts.</li>
+    <li><strong>Interaction terms</strong>: allow trend to vary by season. Example: trend × seasonal dummy. Or let slope differ in summer vs winter.</li>
+  </ul>
+  <p>Trade-offs:</p>
+  <ul>
+    <li>More features increase fit, reduce bias but risk overfitting. The model might capture noise as signal.</li>
+    <li>Complex models need more data. If you add many lag terms or seasonal dummies but you have few time points, estimates are noisy.</li>
+    <li>Interpretation becomes harder when many terms interact.</li>
+  </ul>
+  <p>Another useful extension is incorporating external regressors, such as economic indicators or weather variables, which can improve predictive power when these factors influence the target variable.</p>
+  <p>Model selection criteria like AIC or BIC help balance model complexity and goodness-of-fit, guiding which extensions to include.</p>
+</section>
+
+<section id="advanced">
+  <h2>Advanced Topics (Optional Peek)</h2>
+  <p>When time series regression models are insufficient, you move to more advanced methods. Some of these are:</p>
+  <ul>
+    <li><strong>ARIMA models (AutoRegressive Integrated Moving Average)</strong>: combine autoregression, moving average of past errors, and differencing to make a series stationary. Useful when trend or seasonality is strong or when non-stationary behavior appears.  [oai_citation:0‡Wikipedia](https://en.wikipedia.org/wiki/Autoregressive_integrated_moving_average)</li>
+    <li><strong>State space models</strong>: represent observed series as observation + unobserved state components (trend, seasonality) that evolve over time. Useful for handling missing data, irregular spacing, latent factors.</li>
+    <li><strong>Machine learning approaches</strong>: random forests, gradient boosting, or neural networks may be used where nonlinear effects, complex interactions, and high-frequency data appear. They often require more data and careful validation.</li>
+  </ul>
+  <p>These methods relax some of the strict assumptions of basic regression. For example, ARIMA models work when residuals are autocorrelated and series is non-stationary. But they require more care in selecting parameters like differencing order, lag orders, seasonality period.</p>
+  <p>State space models provide a flexible framework for modeling complex time series by explicitly modeling unobserved components, which can improve interpretability and forecasting accuracy.</p>
+  <p>Machine learning methods can capture nonlinearities and interactions that traditional models may miss but often lack interpretability and require more data and computational resources.</p>
+</section>
+
+<section id="diagnostics-and-model-checking">
+  <h2>Diagnostics and Model Checking</h2>
+  <p>After fitting a time series regression model, it is essential to perform diagnostic checks to validate assumptions and assess model quality. Key diagnostics include:</p>
+  <ul>
+    <li><strong>Residual analysis</strong>: Plot residuals over time to check for patterns or heteroscedasticity (changing variance).</li>
+    <li><strong>Autocorrelation function (ACF) and partial autocorrelation function (PACF)</strong>: Examine residual autocorrelation to detect dependence not captured by the model.</li>
+    <li><strong>Durbin-Watson test</strong>: Statistical test specifically for autocorrelation in residuals.</li>
+    <li><strong>Normality checks</strong>: Use Q-Q plots or tests like Shapiro-Wilk to assess if residuals are approximately normally distributed, which affects inference validity.</li>
+    <li><strong>Outlier detection</strong>: Identify influential points that may disproportionately affect the model fit.</li>
+  </ul>
+  <p>Model checking guides whether further model refinement is needed, such as adding lag terms, transforming variables, or switching to alternative modeling approaches.</p>
+</section>
+
+<section id="common-pitfalls-and-mistakes">
+  <h2>Common Pitfalls and Mistakes</h2>
+  <p>When working with time series regression, practitioners often encounter several common issues:</p>
+  <ul>
+    <li><strong>Ignoring autocorrelation</strong>: Treating observations as independent leads to underestimated standard errors and misleading significance tests.</li>
+    <li><strong>Overfitting</strong>: Adding too many predictors or lags without sufficient data can cause poor generalization.</li>
+    <li><strong>Ignoring stationarity</strong>: Applying models directly to non-stationary data can produce spurious results.</li>
+    <li><strong>Misinterpreting coefficients</strong>: Confusing correlation with causation or overlooking the temporal context can lead to incorrect conclusions.</li>
+    <li><strong>Neglecting model validation</strong>: Failing to test models on out-of-sample data increases risk of over-optimistic performance estimates.</li>
+  </ul>
+  <p>Avoiding these pitfalls requires careful exploratory data analysis, adherence to modeling assumptions, and thorough validation procedures.</p>
+</section>
+
+<section id="limitations">
+  <h2>Limitations and Drawbacks</h2>
+  <p>Time series regression models assume several conditions. First, stationarity or at least trend stationarity. Stationarity means that the statistical properties (mean, variance, autocorrelation) do not change over time. If these change, model predictions are less reliable. Some series need differencing or detrending to become stationary.  [oai_citation:1‡IBM](https://www.ibm.com/think/topics/autocorrelation)</p>
+  <p>Second, residuals should not show strong autocorrelation. If model leaves patterns in residuals, standard errors will be wrong. Tests like Durbin-Watson, ACF plots help detect that.  [oai_citation:2‡Investopedia](https://www.investopedia.com/terms/a/autocorrelation.asp)</p>
+  <p>Also regression assumes linear relationships (in basic form). If trend is nonlinear or seasonality interacts in complicated ways, linear regression may fail. External shocks (e.g. pandemic, policy changes) may produce outliers that disrupt patterns.</p>
+  <p>Finally, overfitting is a risk. Adding many lag terms, seasonal dummy variables, and interactions increases model complexity. With limited data, this leads to poor out-of-sample performance. Always validate using hold-out or cross-validation across time segments.</p>
+  <p>Moreover, time series data often contain missing observations or irregular sampling intervals, which complicate modeling and require specialized techniques or imputation methods.</p>
+  <p>Interpretation challenges also arise when models become complex, making it harder to communicate findings to stakeholders or apply insights practically.</p>
+</section>
+
+<section id="practical-applications-across-domains">
+  <h2>Practical Applications Across Domains</h2>
+  <p>Time series regression is widely used across various fields, including:</p>
+  <ul>
+    <li><strong>Finance</strong>: Modeling stock prices, interest rates, or economic indicators to inform investment decisions.</li>
+    <li><strong>Energy</strong>: Forecasting electricity demand or renewable energy generation to optimize grid operations.</li>
+    <li><strong>Healthcare</strong>: Tracking disease incidence or hospital admissions over time for resource planning.</li>
+    <li><strong>Marketing</strong>: Analyzing sales trends, seasonal promotions, and customer behavior to improve campaigns.</li>
+    <li><strong>Environmental science</strong>: Monitoring climate variables, pollution levels, or natural phenomena for policy and research.</li>
+  </ul>
+  <p>Each domain brings unique challenges such as data frequency, noise characteristics, and external influences, requiring tailored modeling approaches and domain knowledge.</p>
+</section>
+
+<section id="conclusion">
+  <h2>Conclusion / Key Takeaways</h2>
+  <p>Time series regression extends standard regression to respect the temporal ordering in your data. It helps you model trend, seasonality and lag effects. When used correctly it produces better forecasts and more accurate inference.</p>
+  <p>For straightforward data with weak seasonality or clear trend, simple regression with time predictor gives insight. For more complex data with strong seasonality or autocorrelation, you need extended models with lag terms or seasonal dummies.</p>
+  <p>Always check diagnostics: residuals, autocorrelation, stationarity. Do not assume your model is correct without validating. Use tools and tests to confirm.</p>
+  <p>You will learn more by implementing the examples and interactive sections where you try noise levels, switch datasets, compare simple vs extended models. That will deepen your understanding.</p>
+  <p>In summary, mastering time series regression equips you with foundational skills to analyze temporal data effectively and forms a stepping stone to advanced forecasting and machine learning approaches.</p>
+  <p>Remember that good modeling practice involves iterative refinement, critical evaluation of assumptions, and thoughtful interpretation of results in the context of the application domain.</p>
+</section>
+
+<section id="references">
+  <h2>References</h2>
+  <ul>
+    <li>Autocorrelation in Time Series Data. InfluxData.  [oai_citation:3‡InfluxData](https://www.influxdata.com/blog/autocorrelation-in-time-series-data/)</li>
+    <li>Time Series Analysis: Definition, Components and Examples. Analytics Vidhya.  [oai_citation:4‡Analytics Vidhya](https://www.analyticsvidhya.com/blog/2021/10/a-comprehensive-guide-to-time-series-analysis/)</li>
+    <li>What is Time Series Analysis? Sigma Computing.  [oai_citation:5‡Sigma Computing](https://www.sigmacomputing.com/blog/what-is-time-series-analysis)</li>
+    <li>Autoregressive integrated moving average. Wikipedia.  [oai_citation:6‡Wikipedia](https://en.wikipedia.org/wiki/Autoregressive_integrated_moving_average)</li>
+    <li>Origin of autocorrelation and ACF, PACF. Statistics by Jim; OTexts.  [oai_citation:7‡Domino Data Lab](https://domino.ai/blog/time-series-with-r)</li>
+  </ul>
+</section>
+</body>
+<!-- Link to interactive logic -->
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<script type="module" src="script.js"></script>
+</html>

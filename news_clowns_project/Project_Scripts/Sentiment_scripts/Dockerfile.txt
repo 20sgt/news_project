@@ -1,0 +1,25 @@
+# Use Miniconda base image
+FROM continuumio/miniconda3:latest
+
+# Set working directory
+WORKDIR /app
+
+# Copy environment file and install Conda environment
+COPY environment.yml .
+
+# Create the Conda environment
+RUN conda env create -f environment.yml
+
+# Make sure the environment is activated in all RUN/CMD
+SHELL ["conda", "run", "-n", "sentiment_env", "/bin/bash", "-c"]
+
+# Copy project files
+COPY . .
+
+# Download NLTK VADER lexicon in Conda environment
+RUN python -m nltk.downloader vader_lexicon
+
+# Default command to run the script inside the Conda env
+CMD ["conda", "run", "-n", "sentiment_env", "python", "main.py"]
+
+

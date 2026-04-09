@@ -1,0 +1,89 @@
+services:
+  streamlit:
+    build: ./streamlit
+    container_name: streamlit_app
+    ports:
+      - "8501:8501"
+    env_file:
+      - .env
+    volumes:
+      - /Users/sgt/.ssh/news_clowns_msds692.json:/service_account_key.json
+    depends_on:
+      - fastapi
+    networks:
+      - app-network
+
+  fastapi:
+    build: ./fastapi
+    container_name: fastapi_api
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    volumes:
+      - /Users/sgt/.ssh/service_account_msds692.json:/service_account_key.json:ro
+    networks:
+      - app-network
+    depends_on:
+      - truthsocial
+      - reddit
+      - bluesky
+      - googlesearch
+
+  truthsocial:
+    build: ./truthsocial
+    container_name: truthsocial_scraper
+    env_file:
+      - .env
+    volumes:
+      - /Users/sgt/.ssh/news_clown_msds692.json:/service_account_key.json:ro
+    networks:
+      - app-network
+
+  reddit:
+    build: ./reddit
+    container_name: reddit_scraper
+    env_file:
+      - .env
+    volumes:
+      - /Users/sgt/.ssh/news_clowns_msds692.json:/service_account_key.json
+    networks:
+      - app-network
+
+  bluesky:
+    build: ./bluesky
+    container_name: bluesky_scraper
+    env_file:
+      - .env
+    volumes:
+      - /Users/sgt/.ssh/news_clown_msds692.json:/service_account_key.json
+    networks:
+      - app-network
+
+  googlesearch:
+    build: ./googlesearch
+    container_name: googlesearch_scraper
+    env_file:
+      - .env
+    volumes:
+      - /Users/sgt/.ssh/news_clown_msds692.json:/service_account_key.json
+    networks:
+      - app-network
+
+  scheduler:
+    build: ./scheduler
+    container_name: scheduler
+    env_file:
+      - .env
+    depends_on:
+      - truthsocial
+      - reddit
+      - bluesky
+      - googlesearch
+    networks:
+      - app-network
+    command: [ "cron", "-f" ]
+
+networks:
+  app-network:
+    driver: bridge
